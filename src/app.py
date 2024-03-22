@@ -6,16 +6,18 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db
+from api.models import db, Todolist
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+from flask_cors import CORS
 
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
@@ -30,6 +32,9 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
+# Allow CORS requests to this API
+CORS(app)
 
 # add the admin
 setup_admin(app)
@@ -66,6 +71,54 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
+
+
+
+@app.route('/todos', methods=['GET'])
+def get_task():
+    all_tasks = Todolist.query.all()
+    response_body = list(map(lambda x: x.serialize(), all_tasks))
+    return jsonify(response_body), 200
+
+
+@app.route('/todos', methods=['POST'])
+def post_task():
+    new_task = request.json
+    task = Todolist(task =new_task['task'], done =new_task['done'])
+    db.session.add(task)
+    db.session.commit() 
+
+    all_tasks = Todolist.query.all()
+    response_body = list(map(lambda x: x.serialize(), all_tasks))
+    return jsonify(response_body), 200
+
+
+
+@app.route('/todos/<id>', methods=['PUT'])
+def update_task(id):
+    new_task = request.json
+    update_task = Todolist.query.get(id)
+    update_task.done = new_task['done'] 
+    db.session.commit()
+
+    all_tasks = Todolist.query.all()
+    response_body = list(map(lambda x: x.serialize(), all_tasks))
+    return jsonify(response_body), 200
+
+@app.route('/todos/<id>', methods=['DELETE'])
+def delete_task(id):
+    del_task = Todolist.query.get(id)
+    db.session.delete(del_task)
+    db.session.commit()
+
+    return jsonify(f'delete'), 200
+
+
+
+
+
+
+
 
 
 # this only runs if `$ python src/main.py` is executed
