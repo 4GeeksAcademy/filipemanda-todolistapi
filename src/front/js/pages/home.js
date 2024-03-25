@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Context } from "../store/appContext";
-import "./pages/home.css";
+import { Login } from "./login";
+import { Link } from "react-router-dom";
+
 
 export const Home = () => {
 	const [newTodolist, setnewtodolist] = useState([]);
@@ -12,9 +14,6 @@ export const Home = () => {
 			.then((todos_array) => setnewtodolist(todos_array));
 	}, []);
 
-	function handleChange(event) {
-		setinput(event.target.value);
-	}
 
 	const handleButtonClick = () => {
 		fetch('https://silver-space-fiesta-v67rqqww952p456-3001.app.github.dev/todos', {
@@ -76,17 +75,22 @@ export const Home = () => {
 			});
 	};
 
+
+
 	return (
 		<div className="text-center">
+			<Link to="/login"><button onClick={Login} className="btn btn-primary" type="submit">log-in</button>
+
+			</Link>
 			<h1 className="text-center mt-5">To-Do-List</h1>
-			<input className="fa-solid" type="text" placeholder="..." onChange={handleChange} />
+			<input className="fa-solid" type="text" placeholder="..." onChange={(event) => setinput(event.target.value)} />
 			<div className="list">
 				<ul>
 					{
 						newTodolist.length ? newTodolist.map((item) => (
 							<li key={item.id} className={item.done ? 'task-completed' : ''}>
 								{item.task}
-								<span onClick={() => update_task(item)} classname="icon-space">
+								<span onClick={() => update_task(item)} className="icon-space">
 
 									<i className="fa-solid fa-pen-to-square"></i>
 								</span>

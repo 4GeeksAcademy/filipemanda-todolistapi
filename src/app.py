@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, Todolist
+from api.models import db, Todolist , User
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -113,6 +113,36 @@ def delete_task(id):
 
     return jsonify(f'delete'), 200
 
+
+@app.route('/user', methods=['POST'])
+def create_user():
+    new_user = request.json
+    user = User(email =new_user['email'], password =new_user['password'])
+    db.session.add(user)
+    db.session.commit() 
+
+    all_user = User.query.all()
+    response_body = list(map(lambda x: x.serialize(), all_user))
+    return jsonify(response_body), 200
+
+
+@app.route('/user', methods=['GET'])
+def get_user():
+    all_users = User.query.all()
+    response_body = list(map(lambda x: x.serialize(), all_users))
+    return jsonify(response_body), 200
+
+@app.route('/login', methods=['POST'])
+def login():
+    new_user = request.json
+    user =  User.query.filter_by(email=new_user["email"]).first()
+    if user.password == new_user["password"]:
+    
+        return jsonify(user.serialize()), 200
+
+    else :
+        
+        return "password does not match" , 400
 
 
 
